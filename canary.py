@@ -229,29 +229,3 @@ def main():
     except (RuntimeError,ValueError,subprocess.TimeoutExpired,FileNotFoundError) as e:
         print('ERROR:',e,file=sys.stderr);sys.exit(1)
 if __name__=='__main__':main()
-, re.I)
-    forbidden = re.compile(r'(^|/)(\.git|node_modules|vendor|dist|build|\.venv|secrets?)(/|$)', re.I)
-    found = []
-    for repo in c['allowed_repositories']:
-        try:
-            metadata = json.loads(command(['gh', 'api', f'repos/{repo}'], timeout=35))
-            branch = metadata['default_branch']
-            tree = json.loads(command(['gh', 'api',
-                f'repos/{repo}/git/trees/{branch}?recursive=1'], timeout=45))
-            files = [x for x in tree.get('tree', [])
-                     if x.get('type') == 'blob' and 0 < x.get('size', 0) <= 16000
-                     and interesting.search(x['path']) and not forbidden.search(x['path'])
-                     and not x['path'].startswith('.')]
-            # Prefer small source and test files; deterministic order for repeatability.
-            files.sort(key=lambda x: (0 if 'test' in x['path'].lower() else 1, x['path']))
-            samples = []
-            for entry in files[:6]:
-                path = entry['path']
-                raw = command(['gh', 'api', f'repos/{repo}/contents/{path}',
-                    '-H', 'Accept: application/vnd.github.raw+json'], timeout=35)
-                samples.append({'path': path, 'content': raw[:6000]})
-            if samples:
-                found.append({'repo': repo, 'url': metadata['html_url'], 'samples': samples})
-        except (RuntimeError, KeyError, ValueError) as e:
-            print(f'WARN: cannot inspect {repo}: {e}', file=sys.stderr)
-    return found
