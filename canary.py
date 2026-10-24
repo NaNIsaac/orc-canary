@@ -50,16 +50,47 @@ def discover(c):
     return candidates
 
 def repository_candidates(c):
-    """Fallback: sample tracked source/tests when the issue queue is empty.
+    """Read bounded source samples via GitHub; never execute repository code."""
+    exts = ('.py', '.ps1', '.go', '.rs', '.ts', '.js')
+    found = []
+    for repo in c['allowed_repositories']:
+        try:
+            info = json.loads(command(['gh', 'api', 'repos/' + repo], timeout=35))
+            branch = info['default_branch']
+            tree = json.loads(command(['gh', 'api', 'repos/' + repo + '/git/trees/' +
+                                       branch + '?recursive=1'], timeout=45))
+            entries = [
+                x for x in tree.get('tree', [])
+                if x.get('type') == 'blob'
+                and 0 < x.get('size', 0) <= 16000
+                and x['path'].lower().endswith(exts)
+                and not any(p in x['path'].lower().split('/')
+                            for p in ('vendor', 'node_modules', 'build', 'dist', '.venv'))
+            ]
+            entries.sort(key=lambda x: (0 if 'test' in x['path'].lower() else 1,
+                                        x['path']))
+            samples = []
+            for item in entries[:6]:
+                path = item['path']
+                raw = command(['gh', 'api', 'repos/' + repo + '/contents/' + path,
+                               '-H', 'Accept: application/vnd.github.raw+json'],
+                              timeout=35)
+                samples.append({'path': path, 'content': raw[:6000]})
+            if samples:
+                found.append({'repo': repo, 'url': info['html_url'], 'samples': samples})
+        except (RuntimeError, KeyError, ValueError) as exc:
+            print('WARN: cannot inspect ' + repo + ': ' + str(exc), file=sys.stderr)
+    return found
 
-    Read only via GitHub API; never execute repository code. Keep sampling bounded.
-    """
-    interesting = re.compile(r'\.(py|ps1|go|rs|ts|js)
-    """Runs external Codex CLI, NOT through ORC. Override binary in config if needed."""
-    c=config(); binary=c.get('external_agent_binary','codex')
-    if not shutil.which(binary): raise RuntimeError(f'external agent not on PATH: {binary}')
-    # Codex exec reads prompt argument and prints final message to stdout.
-    return command([binary,'exec','--skip-git-repo-check','-'],stdin=prompt,timeout=timeout,cwd=ROOT)
+
+def external_agent(prompt, *, timeout=360):
+    """Run a separate Codex CLI, not an ORC agent."""
+    c = config()
+    binary = c.get('external_agent_binary', 'codex')
+    if not shutil.which(binary):
+        raise RuntimeError('external agent not on PATH: ' + binary)
+    return command([binary, 'exec', '--skip-git-repo-check', '-'],
+                   stdin=prompt, timeout=timeout, cwd=ROOT)
 
 def load_run(runid):
     folder=RUNS / runid
