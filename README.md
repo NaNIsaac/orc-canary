@@ -4,7 +4,7 @@ A small **external** quality probe, not an ORC lane or ORC instruction. No chang
 
 ## What it does
 
-1. `plan`: Read open GitHub issues in an explicit allowlist using `gh`, ask external `codex exec` for one bounded, real coding task, and save an auditable `runs/<id>/run.json`.
+1. `plan`: Search open GitHub issues first; if none exist, inspect a bounded selection of source and test files via the GitHub API, ask external `codex exec` for a justified small coding task, and save `runs/<id>/run.json`.
 2. `dispatch`: After user review, send a **normal** task to ORC through `courier send secretary`.
 3. `assess`: Once ORC returns a PR/commit URL, fetch GitHub's actual changes and have outside `codex exec` produce an independent, evidence-limited review.
 4. `install-scheduler.ps1`: Optional Sunday scheduled **plan only**, disabled unless `-Install` is passed. No automatic merge, push, or release.
@@ -35,7 +35,7 @@ pwsh -File .\install-scheduler.ps1
 pwsh -File .\install-scheduler.ps1 -Install -At 03:00
 ```
 
-**Important:** Set the allowlist to repos with suitable open issues. If no eligible issues exist the command exits without a task. The external agent's output is schema-validated; only an issue URL already returned by `gh` can be selected. PR/issue text is untrusted, and all subprocesses run without a shell. No code or files from issues are executed.
+**Important:** Set the allowlist to repositories with readable source. If no eligible issues exist, the tool samples up to six small code/test files per repository. If no defensible task can be identified, it exits without dispatch. The external agent's output is schema-validated; only a URL returned by the GitHub API can be selected. PR/issue text is untrusted, and all subprocesses run without a shell. No code or files from issues are executed.
 
 ## Known limitations / next steps
 
