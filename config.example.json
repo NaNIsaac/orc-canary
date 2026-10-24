@@ -1,0 +1,11 @@
+{
+  "external_agent_binary": "codex",
+  "orc_target": "secretary",
+  "allowed_repositories": [
+    "NaNIsaac/IsaacPSTools",
+    "NaNIsaac/hanfix",
+    "NaNIsaac/roi_rectangle"
+  ],
+  "exclude_labels": ["security", "blocked", "needs-owner", "research", "heavy", "release"],
+  "max_candidates": 12
+}
