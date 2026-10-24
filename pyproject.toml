@@ -1,0 +1,18 @@
+[project]
+name = "orc-canary"
+version = "0.1.0"
+description = "Independent, scheduled quality probe for an external ORC agent system"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+authors = [{name = "Isaac Yong"}]
+
+[project.scripts]
+orc-canary = "canary:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = ["canary"]
