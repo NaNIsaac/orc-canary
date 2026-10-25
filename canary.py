@@ -23,9 +23,23 @@ RUNS = ROOT / 'runs'
 def utcnow(): return dt.datetime.now(dt.timezone.utc).isoformat()
 
 def command(argv, *, stdin=None, timeout=90, cwd=None):
-    p = subprocess.run(argv, input=stdin, capture_output=True, text=True, encoding='utf-8',
-                       errors='replace', timeout=timeout, cwd=cwd, shell=False)
-    if p.returncode: raise RuntimeError(f'{argv[0]} returned {p.returncode}: {p.stderr[-1200:]}')
+    executable = shutil.which(str(argv[0]))
+    if executable is None:
+        raise RuntimeError(
+            f"Cannot find executable {argv[0]!r} on the Python process PATH. "
+            f"Check: python -c \"import shutil; print(shutil.which('{argv[0]}'))\""
+        )
+    try:
+        p = subprocess.run([executable, *argv[1:]], input=stdin,
+                           capture_output=True, text=True, encoding='utf-8',
+                           errors='replace', timeout=timeout, cwd=cwd, shell=False)
+    except OSError as exc:
+        raise RuntimeError(
+            f"Failed to launch {argv[0]!r} (resolved to {executable!r}): {exc}. "
+            "If this is a PowerShell alias/function or shell shim, configure a real executable."
+        ) from exc
+    if p.returncode:
+        raise RuntimeError(f'{argv[0]} returned {p.returncode}: {p.stderr[-1200:]}')
     return p.stdout
 
 def config():
