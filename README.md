@@ -11,6 +11,49 @@ A small **external** quality probe, not an ORC lane or ORC instruction. No chang
 
 This is an operational smoke test, **not** a statistically reliable model benchmark. It cannot automatically prove regression from a single run. It does not observe full ORC execution traces or invoke hidden tests. It also does not currently automatically detect task completion; give the resulting PR/commit URL to `assess`.
 
+## Workflow at a glance
+
+This is a **conceptual flow**, not a captured terminal session or proof of a running scheduler.
+
+```mermaid
+flowchart LR
+    A["GitHub issues / bounded source sample"] --> B["PLAN: external Codex suggests a task"]
+    B --> C{"Owner reviews plan"}
+    C -->|Reject| X["Stop; no dispatch"]
+    C -->|Approve| D["DISPATCH: courier → secretary"]
+    D --> E["ORC / Boss works on project"]
+    E --> F["GitHub PR or commit URL"]
+    F --> G["ASSESS: independent external review"]
+    G --> H["Owner reviews evidence"]
+    H --> I{"Merge decision"}
+    I -->|Accept| J["Normal project review / merge"]
+    I -->|Revise| E
+```
+
+### Example terminal walkthrough (illustrative)
+
+```text
+PS> python .\canary.py plan
+      │
+      └── Review runs/<id>/run.json before continuing.
+
+PS> python .\canary.py dispatch <id>
+      │
+      └── Preview only — nothing is sent.
+
+PS> python .\canary.py dispatch <id> --send
+      │
+      └── Explicitly send the approved task through Courier.
+
+[ORC creates a PR or commit; obtain its real URL]
+
+PS> python .\canary.py assess <id> --result-url <actual-github-url>
+      │
+      └── Review the external assessment and GitHub evidence.
+```
+
+**Safety boundary:** `plan` alone does not authorize `dispatch --send`. External assessments do not execute hidden tests or automatically merge code. The commands above are examples, not observed output.
+
 ## Prerequisites (LAB-PC)
 
 - Windows PowerShell 7, Python >= 3.10, GitHub CLI `gh` logged in, external `codex` CLI signed in, `courier` CLI and running dispatcher on the LAB-PC.
