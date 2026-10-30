@@ -78,7 +78,7 @@ pwsh -File .\install-scheduler.ps1
 pwsh -File .\install-scheduler.ps1 -Install -At 03:00
 ```
 
-**Important:** Set the allowlist to repositories with readable source. If no eligible issues exist, the tool samples up to six small code/test files per repository. If no defensible task can be identified, it exits without dispatch. The external agent's output is schema-validated; only a URL returned by the GitHub API can be selected. PR/issue text is untrusted, and all subprocesses run without a shell. No code or files from issues are executed.
+**Important:** Issue selection sends only repository, issue number, title, URL and labels to the external evaluator; issue bodies are neither requested nor forwarded. Titles and labels can still contain sensitive text, so restrict the allowlist to appropriate repositories. The code-sampling fallback sends bounded source snippets to the external evaluator; do not enable it for repositories with secrets or unpublished research data. Set the allowlist to repositories with readable source. If no eligible issues exist, the tool samples up to six small code/test files per repository. If no defensible task can be identified, it exits without dispatch. The external agent's output is schema-validated; only a URL returned by the GitHub API can be selected. PR/issue text is untrusted, and all subprocesses run without a shell. No code or files from issues are executed.
 
 ## Known limitations / next steps
 

@@ -53,14 +53,14 @@ def discover(c):
     for repo in c['allowed_repositories']:
         if not re.fullmatch(r'[\w.-]+/[\w.-]+',repo): raise ValueError(f'invalid repository: {repo}')
         raw=command(['gh','issue','list','-R',repo,'--state','open','--limit','40',
-                     '--json','number,title,url,labels,body'], timeout=60)
+                     '--json','number,title,url,labels'], timeout=60)
         for item in json.loads(raw):
             labels=[x['name'].lower() for x in item.get('labels',[])]
             title=item['title']
             if any(t in labels for t in c.get('exclude_labels', [])): continue
             if any(t in title.lower() for t in ('security','credential','secret','token','billing','force push','delete history')): continue
             candidates.append({'repo':repo,'number':item['number'],'title':title,
-                               'url':item['url'],'body':(item.get('body') or '')[:1500],'labels':labels})
+                               'url':item['url'],'labels':labels})
     return candidates
 
 def repository_candidates(c):
@@ -118,7 +118,12 @@ def plan(args):
     c = config()
     issues = discover(c)
     if issues:
-        candidates = issues[:c.get('max_candidates', 12)]
+        # Allowlist fields again at the external-agent boundary. Issue bodies may
+        # contain private data, even when an issue's title looks harmless.
+        candidates = [
+            {key: issue[key] for key in ('repo', 'number', 'title', 'url', 'labels')}
+            for issue in issues[:c.get('max_candidates', 12)]
+        ]
         source = 'issues'
         context = json.dumps(candidates, ensure_ascii=False)
         valid_urls = [x['url'] for x in candidates]
