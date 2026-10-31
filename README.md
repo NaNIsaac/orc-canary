@@ -15,21 +15,9 @@ This is an operational smoke test, **not** a statistically reliable model benchm
 
 This is a **conceptual flow**, not a captured terminal session or proof of a running scheduler.
 
-```mermaid
-flowchart LR
-    A["GitHub issues / bounded source sample"] --> B["PLAN: external Codex suggests a task"]
-    B --> C{"Owner reviews plan"}
-    C -->|Reject| X["Stop; no dispatch"]
-    C -->|Approve| D["DISPATCH: courier → secretary"]
-    D --> E["ORC / Boss works on project"]
-    E --> F["GitHub PR or commit URL"]
-    F --> G["ASSESS: independent external review"]
-    G --> H["Owner reviews evidence"]
-    H --> I{"Merge decision"}
-    I -->|Accept| J["Normal project review / merge"]
-    I -->|Revise| E
-```
+![Five clear vertical steps: plan, Owner review, dispatch through Courier, ORC execution, external assessment. Rejection stops; merging requires separate review.](docs/media/canary-workflow-mobile.svg)
 
+[Open the workflow diagram at full size](docs/media/canary-workflow-mobile.svg)
 ### Example terminal walkthrough (illustrative)
 
 ```text
